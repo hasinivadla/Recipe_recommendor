@@ -64,7 +64,7 @@ Recipe_recommender/
 
 ## 👩‍💻 Author
 
-****  Vadla Hasini
+Vadla Hasini
 [GitHub](https://github.com/hasinivadla) | [LinkedIn](www.linkedin.com/in/hasini-vadla-509028300)
 
 ---
