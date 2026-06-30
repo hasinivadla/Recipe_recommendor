@@ -1,0 +1,2962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Recommender</title>
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #fff9f0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        /* Header Styles */
+        header {
+            background-color: #ff9a3c;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            flex-grow: 1;
+            text-align: center;
+            text-transform: uppercase;
+            margin-right: 40px;
+            /* Adjust this value if needed based on button size/padding */
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100%;
+            background-color: #ff9a3c;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            padding-top: 70px;
+            /* Adjusted to match header height + some space */
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-menu li a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            display: block;
+            transition: all 0.3s ease;
+            display: flex;
+            /* Align icon and text */
+            align-items: center;
+            /* Vertically align icon and text */
+            gap: 10px;
+            /* Space between icon and text */
+        }
+
+        .sidebar-menu li a:hover {
+            color: #ffeb3b;
+            padding-left: 30px;
+            /* Indent text on hover */
+        }
+
+        /* Ensure icons don't get pushed too far */
+        .sidebar-menu li a i {
+            width: 20px;
+            /* Fixed width for icon alignment */
+            text-align: center;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Home Page Styles */
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+            background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .food-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .food-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 200px;
+            /* Fixed height for consistency */
+            background-color: #eee;
+            /* Placeholder bg */
+        }
+
+        .food-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .food-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.5s ease;
+        }
+
+        .food-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .food-item .overlay-text {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            color: white;
+            padding: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .register-btn {
+            margin: 40px auto;
+            display: block;
+            padding: 15px 40px;
+            font-size: 18px;
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 50px 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-column h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #ff9a3c;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: #ddd;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            /* Align icons */
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-column ul li a:hover {
+            color: #ff9a3c;
+            padding-left: 5px;
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        /* Registration Page Styles */
+        .registration-page {
+            display: none;
+            /* Initially hidden */
+            padding: 60px 0;
+        }
+
+        .registration-form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .registration-form h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ff6b6b;
+            font-size: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea { /* Added textarea */
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+         .form-group textarea {
+             min-height: 100px; /* Give textarea some height */
+             resize: vertical; /* Allow vertical resizing */
+         }
+
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus { /* Added textarea */
+            border-color: #ff9a3c;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 154, 60, 0.2);
+        }
+
+        .gender-options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            /* Allow wrapping */
+        }
+
+        .gender-option {
+            display: flex;
+            align-items: center;
+        }
+
+        .gender-option label {
+            margin-bottom: 0;
+            /* Override default */
+            margin-left: 5px;
+            /* Space from radio */
+            font-weight: 500;
+            /* Lighter weight */
+            color: #333;
+        }
+
+        .gender-option input[type="radio"] {
+            width: auto;
+            /* Don't force full width */
+            margin-right: 0;
+            /* Use label margin instead */
+            accent-color: #ff6b6b;
+            /* Color the radio button */
+        }
+
+        .error-message {
+            color: #ff5252;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+            /* Initially hidden */
+        }
+
+        .animated-food {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .animated-food img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        /* Main Page Styles */
+        .main-page {
+            display: none;
+            /* Initially hidden */
+            padding: 60px 0;
+        }
+
+        .main-page h1 {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 40px;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .ingredients-input {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .ingredients-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px 0 0 5px;
+            font-size: 16px;
+            border-right: none;
+            /* Seamless look with button */
+        }
+
+        .ingredients-input input:focus {
+            border-color: #ff9a3c;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 154, 60, 0.2);
+            z-index: 1;
+            /* Ensure focus shadow is on top */
+        }
+
+        .ingredients-input button {
+            padding: 12px 20px;
+            background-color: #ff9a3c;
+            color: white;
+            border: 1px solid #ff9a3c;
+            /* Match input border */
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .ingredients-input button:hover {
+            background-color: #ff8c26;
+        }
+
+        .ingredients-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            min-height: 20px;
+            /* Ensure space even when empty */
+        }
+
+        .tag {
+            background-color: #ff9a3c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+            /* Add subtle animation */
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .tag-remove {
+            margin-left: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 1;
+            transition: color 0.2s ease;
+        }
+
+        .tag-remove:hover {
+            color: #ffeb3b;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            /* 2 columns */
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 15px;
+            /* Slightly smaller */
+            background-color: white;
+            /* Ensure bg color */
+        }
+
+        .filter-group select:focus {
+            border-color: #ff9a3c;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 154, 60, 0.2);
+        }
+
+        .search-btn-container {
+            text-align: center;
+        }
+
+        /* --- Styles for the placeholder/no-results message --- */
+        .recipes-container p.message {
+            /* More specific selector */
+            grid-column: 1/-1;
+            /* Span full width if grid */
+            text-align: center;
+            padding: 40px 20px;
+            color: #555;
+            font-size: 18px;
+            background-color: #f8f8f8;
+            border: 1px dashed #ddd;
+            /* Subtle border */
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+
+        .recipes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+            /* Content added dynamically by JS */
+        }
+
+        .recipe-card {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            /* Use flex for better structure */
+            flex-direction: column;
+            /* Stack image and info */
+            position: relative; /* Needed for favourite button absolute positioning */
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .recipe-img {
+            height: 200px;
+            overflow: hidden;
+            background-color: #eee;
+            /* Placeholder bg */
+        }
+
+        .recipe-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.5s ease;
+        }
+
+        .recipe-card:hover .recipe-img img {
+            transform: scale(1.1);
+        }
+
+        .recipe-info {
+            padding: 20px;
+            flex-grow: 1;
+            /* Allow info to take remaining space */
+            display: flex;
+            flex-direction: column;
+            /* Stack title, meta, button */
+        }
+
+        .recipe-info h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.2em;
+            /* Slightly larger title */
+            line-height: 1.3;
+            /* Adjust line height */
+            min-height: 2.6em;
+            /* Reserve space for 2 lines approx */
+        }
+
+        .recipe-meta {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            /* Allow wrapping on small cards */
+            gap: 5px 15px;
+            /* Add gap for wrap */
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .recipe-meta span {
+            display: inline-flex;
+            /* Align icon and text */
+            align-items: center;
+            gap: 5px;
+            /* Space between icon and text */
+        }
+
+        .view-recipe-btn {
+            display: block;
+            text-align: center;
+            background-color: #ff6b6b;
+            color: white;
+            padding: 8px 0;
+            /* Vertical padding only */
+            width: 100%;
+            /* Full width */
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: auto;
+            /* Push button to bottom */
+        }
+
+        .view-recipe-btn:hover {
+            background-color: #ff5252;
+        }
+
+        /* Favourite Button on Card */
+        .favourite-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10; /* Ensure it's above the image overlay */
+        }
+
+        .favourite-btn:hover {
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        .favourite-btn i {
+            color: #ccc; /* Default grey color */
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .favourite-btn.active i {
+            color: #ff6b6b; /* Red for favourited */
+        }
+
+
+        /* Recipe Detail Styles */
+        .recipe-detail {
+            display: none;
+            /* Initially hidden */
+            padding: 60px 0;
+        }
+
+        .recipe-detail-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .recipe-detail-img {
+            height: 400px;
+            overflow: hidden;
+            background-color: #eee;
+            /* Placeholder bg */
+            position: relative; /* Needed for favourite button */
+        }
+
+        .recipe-detail-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+         /* Favourite Button on Detail Page */
+         .recipe-detail-img .favourite-btn {
+            top: 20px; /* Adjust position */
+            right: 20px; /* Adjust position */
+        }
+
+
+        .recipe-detail-content {
+            padding: 40px;
+        }
+
+        .recipe-detail-header {
+            margin-bottom: 30px;
+            position: relative; /* For potential positioning of elements inside */
+        }
+
+        .recipe-detail-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #ff6b6b;
+            /* If favourite button is inside header, add padding/margin to avoid overlap */
+            /* padding-right: 50px; */
+        }
+
+        .recipe-meta-detail {
+            display: flex;
+            flex-wrap: wrap;
+            /* Allow wrapping */
+            gap: 15px 25px;
+            /* Spacing for items */
+            color: #777;
+            margin-bottom: 20px;
+            font-size: 15px;
+            /* Slightly larger */
+            border-bottom: 1px solid #eee;
+            /* Separator */
+            padding-bottom: 20px;
+        }
+
+        .recipe-meta-detail span {
+            display: inline-flex;
+            /* Align icon and text */
+            align-items: center;
+            gap: 6px;
+            /* Space between icon and text */
+        }
+
+        .recipe-detail-section {
+            margin-bottom: 30px;
+        }
+
+        .recipe-detail-section h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #ff9a3c;
+            border-bottom: 2px solid #ff9a3c;
+            padding-bottom: 5px;
+            display: inline-block;
+            /* Fit border to text */
+        }
+
+        .ingredients-list,
+        .instructions-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .ingredients-list li {
+            margin-bottom: 10px;
+            /* Increased spacing */
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.6;
+            /* Better readability */
+        }
+
+        .ingredients-list li:before {
+            content: "â€¢";
+            color: #ff6b6b;
+            font-size: 22px;
+            /* Slightly larger */
+            position: absolute;
+            left: 0;
+            top: 0px;
+            /* Adjust vertical align */
+            line-height: 1;
+            /* Prevent bullet affecting line height */
+        }
+
+        .instructions-list li {
+            margin-bottom: 18px;
+            /* Increased spacing */
+            padding-left: 35px;
+            /* Increased padding for number */
+            position: relative;
+            counter-increment: step-counter;
+            line-height: 1.7;
+            /* Better readability */
+        }
+
+        .instructions-list li:before {
+            content: counter(step-counter);
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            width: 24px;
+            /* Slightly larger */
+            height: 24px;
+            /* Slightly larger */
+            border-radius: 50%;
+            display: inline-flex;
+            /* Use flex for centering */
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            left: 0;
+            top: 2px;
+            /* Adjust vertical align */
+            line-height: 1;
+            /* Prevent affecting line height */
+        }
+
+        .back-btn {
+            display: inline-flex;
+            /* Use flex for icon alignment */
+            align-items: center;
+            /* Vertically align icon and text */
+            gap: 8px;
+            /* Space between icon and text */
+            margin-top: 20px;
+            background-color: #ff9a3c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            /* Ensure it looks like a button */
+            cursor: pointer;
+            /* Add cursor pointer */
+        }
+
+        .back-btn:hover {
+            background-color: #ff8c26;
+        }
+
+        /* Feedback Modal Styles */
+        .feedback-modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 2000; /* Sit on top (higher than sidebar and overlay) */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+            padding-top: 60px; /* Place the modal content 60px from the top */
+            animation: fadeInModal 0.3s ease-out;
+        }
+
+        .feedback-modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; /* 5% from the top and centered */
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px; /* Could be responsive */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative; /* For the close button */
+             animation: slideInModal 0.3s ease-out;
+        }
+
+         @keyframes fadeInModal {
+             from { opacity: 0; }
+             to { opacity: 1; }
+         }
+
+         @keyframes slideInModal {
+             from { transform: translateY(-50px); opacity: 0; }
+             to { transform: translateY(0); opacity: 1; }
+         }
+
+
+        .feedback-modal-content h2 {
+            text-align: center;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .feedback-modal-content .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .feedback-modal-content .close-btn:hover,
+        .feedback-modal-content .close-btn:focus {
+            color: #777;
+            text-decoration: none;
+        }
+
+        .rating-section {
+            margin-bottom: 20px;
+        }
+
+        .rating-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .rating-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center; /* Center the rating options */
+        }
+
+        .rating-option input[type="radio"] {
+            margin-right: 5px;
+            accent-color: #ff9a3c; /* Color the radio button */
+        }
+
+        .feedback-text-section label {
+             display: block;
+             margin-bottom: 10px;
+             font-weight: 600;
+             color: #555;
+        }
+
+         .feedback-modal-content .form-group {
+            margin-bottom: 20px; /* Ensure spacing within modal form */
+         }
+
+         .feedback-modal-content .btn-primary {
+            width: 100%; /* Make submit button full width in modal */
+            padding: 12px;
+         }
+
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 10px;
+            }
+
+            .logo {
+                font-size: 24px;
+                margin-right: 30px;
+            }
+
+            .sidebar-toggle {
+                margin-right: 10px;
+            }
+
+            .sidebar {
+                width: 250px;
+                /* Slightly narrower */
+                left: -250px;
+                padding-top: 60px;
+                /* Adjust if header shrinks */
+            }
+
+            .sidebar-menu li a:hover {
+                padding-left: 25px;
+                /* Adjust hover indent */
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero p {
+                font-size: 18px;
+            }
+
+            .food-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+                /* Stack filters */
+            }
+
+            .registration-form,
+            .search-box {
+                padding: 30px 20px;
+            }
+
+            .registration-form h2 {
+                font-size: 28px;
+            }
+
+            .recipe-detail-content {
+                padding: 30px 20px;
+            }
+
+            .recipe-detail-img {
+                height: 300px;
+            }
+
+            .footer-content {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                /* Adjust min width */
+            }
+
+            .recipes-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                /* Adjust card size */
+            }
+
+            .recipe-info h3 {
+                font-size: 1.1em;
+            }
+
+            .recipe-meta {
+                font-size: 13px;
+                gap: 5px 10px;
+            }
+
+             .feedback-modal-content {
+                 margin: 10% auto; /* Adjust margin for smaller screens */
+                 max-width: 90%; /* Use more width on small screens */
+                 padding: 20px;
+             }
+
+             .feedback-modal-content h2 {
+                font-size: 24px;
+                margin-bottom: 15px;
+             }
+
+             .feedback-modal-content .close-btn {
+                 top: 10px;
+                 right: 15px;
+                 font-size: 24px;
+             }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 18px;
+                margin-right: 20px;
+                /* Adjust spacing */
+                text-align: left;
+                /* Align left on small screens */
+                flex-grow: 0;
+                /* Don't let it grow */
+            }
+
+            .header-content {
+                justify-content: space-between;
+                /* Space out toggle and logo */
+            }
+
+            .sidebar-toggle {
+                font-size: 20px;
+                margin-right: 0;
+                /* Remove margin if needed */
+            }
+
+            .hero h1 {
+                font-size: 30px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .food-gallery {
+                grid-template-columns: 1fr;
+                /* Single column */
+            }
+
+            .gender-options {
+                flex-direction: column;
+                /* Stack vertically */
+                gap: 10px;
+                align-items: flex-start;
+                /* Align left */
+            }
+
+            /* Filters already 1 column from 768px media query */
+            .recipes-container {
+                grid-template-columns: 1fr;
+                /* Stack recipe cards */
+            }
+
+            .recipe-detail-header h1 {
+                font-size: 24px;
+            }
+
+            .recipe-detail-section h2 {
+                font-size: 20px;
+            }
+
+            .recipe-detail-img {
+                height: 250px;
+            }
+
+            .animated-food img {
+                width: 60px;
+                height: 60px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                /* Stack footer columns */
+                text-align: center;
+            }
+
+            .footer-column h3 {
+                margin-bottom: 15px;
+            }
+
+            .footer-column ul {
+                padding-left: 0;
+                /* Remove default padding */
+            }
+
+            .footer-column ul li a {
+                padding-left: 0;
+                /* Remove hover padding */
+                justify-content: center;
+                /* Center items */
+            }
+
+            .footer-column ul li a:hover {
+                padding-left: 0;
+                /* Ensure no padding on hover */
+            }
+
+            /* Ensure meta details stack nicely */
+            .recipe-meta-detail {
+                gap: 10px;
+                font-size: 14px;
+                /* Adjust size */
+                padding-bottom: 15px;
+                margin-bottom: 15px;
+            }
+
+            .ingredients-input {
+                flex-direction: column;
+                /* Stack input and button */
+                gap: 10px;
+            }
+
+            .ingredients-input input {
+                border-radius: 5px;
+                /* Full radius */
+                border-right: 1px solid #ddd;
+                /* Add back border */
+            }
+
+            .ingredients-input button {
+                border-radius: 5px;
+                /* Full radius */
+                width: 100%;
+                /* Full width button */
+            }
+
+            .registration-form {
+                padding: 20px 15px;
+            }
+
+            .search-box {
+                padding: 20px 15px;
+            }
+
+            .recipe-detail-content {
+                padding: 20px 15px;
+            }
+
+            .instructions-list li {
+                padding-left: 30px;
+                /* Adjust padding */
+            }
+
+            .instructions-list li:before {
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+                top: 4px;
+            }
+
+            .ingredients-list li {
+                padding-left: 20px;
+                /* Adjust padding */
+            }
+
+            .ingredients-list li:before {
+                font-size: 18px;
+                top: 2px;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <button class="sidebar-toggle" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo">RECIPE RECOMMENDER</div>
+        </div>
+    </header>
+
+    <div class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="#" class="home-link"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="#" class="favourites-link"><i class="fas fa-heart"></i> Favourites</a></li>
+            <li><a href="#" class="about-link"><i class="fas fa-info-circle"></i> About Us</a></li>
+        </ul>
+    </div>
+
+    <div class="overlay"></div>
+
+    <section class="hero" id="home-page">
+        <div class="container">
+            <h1>Discover Delicious Indian Recipes</h1>
+            <p>Find the perfect recipe based on your ingredients and dietary preferences</p>
+            <div class="food-gallery">
+                <div class="food-item">
+                    <img src="https://images.unsplash.com/photo-1589301760014-d929f3979dbc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                        alt="Idli Example">
+                    <div class="overlay-text">Idli</div>
+                </div>
+                <div class="food-item">
+                    <img src="https://images.unsplash.com/photo-1589302168068-964664d93dc0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                        alt="Biryani Example">
+                    <div class="overlay-text">Chicken Biryani</div>
+                </div>
+                <div class="food-item">
+                    <img src="https://5.imimg.com/data5/SELLER/Default/2024/9/450080420/UF/QV/MB/230584086/special-mutton-curry-full.jpg"
+                        alt="Mutton Curry Example">
+                    <div class="overlay-text">Mutton Curry</div>
+                </div>
+                <div class="food-item">
+                    <img src="https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                        alt="Samosa Example">
+                    <div class="overlay-text">Samosa</div>
+                </div>
+            </div>
+            <button class="btn btn-primary register-btn" id="register-now-btn">Register to Search Recipes</button>
+        </div>
+    </section>
+
+    <section class="registration-page" id="registration-page">
+        <div class="container">
+            <div class="registration-form">
+                <h2>Create Your Account</h2>
+                <form id="registration-form" novalidate>
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address (Gmail only)</label>
+                        <input type="email" id="email" name="email" required placeholder="example@gmail.com">
+                        <div class="error-message" id="email-error">Please enter a valid Gmail address</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password (min. 6 characters)</label>
+                        <input type="password" id="password" name="password" required minlength="6">
+                        <div class="error-message" id="password-error">Password must be at least 6 characters</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <div class="gender-options">
+                            <div class="gender-option">
+                                <input type="radio" id="male" name="gender" value="male" checked>
+                                <label for="male">Male</label>
+                            </div>
+                            <div class="gender-option">
+                                <input type="radio" id="female" name="gender" value="female">
+                                <label for="female">Female</label>
+                            </div>
+                            <div class="gender-option">
+                                <input type="radio" id="other" name="gender" value="other">
+                                <label for="other">Other</label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"
+                        style="width: 100%; padding: 15px; font-size: 18px;">Submit & Find Recipes</button>
+                </form>
+                <div class="animated-food">
+                    <img src="https://blog.swiggy.com/wp-content/uploads/2024/11/Image-1_mumbai-vada-pav-1024x538.png"
+                        alt="Vada Pav">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ162cu85hSSilSAskQKOMKwALr6qZpz5MDzg&s"
+                        alt="Pani Puri">
+                    <img src="https://vegecravings.com/wp-content/uploads/2016/07/veg-pulao-recipe-step-by-step-instructions.jpg"
+                        alt="Veg Pulao">
+                    <img src="https://madhurasrecipe.com/wp-content/uploads/2020/10/Dhaba-Style-Aloo-Paratha-feature.jpg"
+                        alt="Aloo Paratha">
+                    <img src="https://static01.nyt.com/images/2025/01/17/multimedia/CR-Lemony-Hummus-Pasta-wtkj/CR-Lemony-Hummus-Pasta-wtkj-jumbo.jpg"
+                        alt="Pasta">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="main-page" id="main-page">
+        <div class="container">
+            <h1 id="main-page-title">Find Your Perfect Recipe</h1>
+            <div class="search-box" id="recipe-search-box">
+                <div class="ingredients-input">
+                    <input type="text" id="ingredient-input" placeholder="Enter an ingredient (e.g., chicken, rice)">
+                    <button id="add-ingredient-btn" aria-label="Add Ingredient"><i class="fas fa-plus"></i> Add</button>
+                </div>
+                <div class="ingredients-tags" id="ingredients-tags" aria-live="polite">
+                </div>
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="recipe-type">Recipe Type</label>
+                        <select id="recipe-type">
+                            <option value="all">All Types</option>
+                            <option value="veg">Vegetarian</option>
+                            <option value="non-veg">Non-Vegetarian</option>
+                            <option value="vegan">Vegan</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="meal-type">Meal Type</label>
+                        <select id="meal-type">
+                            <option value="all">All Meals</option>
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                            <option value="snacks">Snacks</option>
+                            <option value="starter">Starter</option>
+                            <option value="accompaniment">Accompaniment</option>
+                            <option value="dessert">Dessert</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="search-btn-container">
+                    <button class="btn btn-primary" id="search-recipes-btn"
+                        style="padding: 12px 30px; font-size: 17px;"><i class="fas fa-search"></i> Search Recipes</button>
+                </div>
+            </div>
+
+            <div class="recipes-container" id="recipes-container">
+                <p class="message">Enter ingredients and select filters, then click "Search Recipes" to find your perfect meal!</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="main-page" id="about-page" style="display: none;">
+        <div class="container">
+            <div
+                style="max-width: 800px; margin: 40px auto; background-color: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);">
+                <h1 style="text-align: center; color: #ff6b6b; margin-bottom: 30px;">About Us</h1>
+                <p style="text-align: justify; line-height: 1.8; color: #555;"> Welcome to Recipe Recommender, your go-to
+                    source for discovering delicious Indian recipes! Our mission is to help you find the perfect dish based on
+                    the ingredients you have on hand and your dietary preferences. Whether you're a seasoned cook or just
+                    starting your culinary journey, we aim to inspire you with a variety of recipes, from classic comfort
+                    foods to exciting new flavors. </p>
+                <p style="text-align: justify; line-height: 1.8; color: #555; margin-top: 20px;"> This platform was created
+                    with a passion for food and technology, bringing together a curated collection of recipes to make your
+                    cooking experience easier and more enjoyable. Explore, cook, and savor the rich tastes of India! </p>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn btn-primary" id="about-back-home-btn">Back to Home</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="recipe-detail" id="recipe-detail">
+        <div class="container">
+            <div class="recipe-detail-container">
+                 <div class="recipe-detail-img">
+                    <img id="detail-recipe-img" src="" alt="">
+                     <div class="favourite-btn" id="detail-favourite-btn" data-id="">
+                        <i class="far fa-heart" aria-label="Favourite this recipe"></i>
+                    </div>
+                </div>
+                <div class="recipe-detail-content">
+                    <div class="recipe-detail-header">
+                        <h1 id="detail-recipe-title">Recipe Title</h1>
+                        <div class="recipe-meta-detail">
+                            <span id="detail-recipe-time"><i class="fas fa-clock" aria-hidden="true"></i> Time</span>
+                            <span id="detail-recipe-type"><i class="fas fa-leaf" aria-hidden="true"></i> Type</span>
+                            <span id="detail-recipe-meal"><i class="fas fa-concierge-bell" aria-hidden="true"></i> Meal</span>
+                        </div>
+                    </div>
+                    <div class="recipe-detail-section">
+                        <h2>Ingredients</h2>
+                        <ul class="ingredients-list" id="detail-recipe-ingredients">
+                        </ul>
+                    </div>
+                    <div class="recipe-detail-section">
+                        <h2>Instructions</h2>
+                        <ol class="instructions-list" id="detail-recipe-instructions">
+                        </ol>
+                    </div>
+                    <button class="back-btn" id="back-to-recipes-btn"><i class="fas fa-arrow-left"></i> Back to
+                        Recipes</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>About Us</h3>
+                    <ul>
+                        <li><a href="#" class="footer-about-link"><i class="fas fa-book-open"></i> Our Story</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Explore</h3>
+                    <ul>
+                        <li><a href="#" class="footer-home-link"><i class="fas fa-home"></i> Home</a></li>
+                        <li><a href="#" class="footer-favourites-link"><i class="fas fa-heart"></i> Favourites</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Help</h3>
+                    <ul>
+                        <li><a href="tel:+918977039499"><i class="fas fa-phone" aria-hidden="true"></i> Call Us: +91 89770 39499</a></li>
+                        <li><a href="#" class="feedback-link"><i class="fas fa-comment-dots"></i> Feedback</a></li> </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Connect</h3>
+                    <ul>
+                        <li><a href="#" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i>
+                                Instagram</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; <span id="current-year"></span> Recipe Recommender. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="feedbackModal" class="feedback-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="feedback-modal-content">
+            <span class="close-btn" id="closeFeedbackModal" aria-label="Close feedback form">&times;</span>
+            <h2>Provide Feedback</h2>
+            <form id="feedbackForm">
+                <div class="form-group rating-section">
+                    <label for="rating">Your Rating:</label>
+                    <div class="rating-options">
+                        <div>
+                            <input type="radio" id="rating5" name="rating" value="5" required>
+                            <label for="rating5">5 Stars</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="rating4" name="rating" value="4">
+                            <label for="rating4">4 Stars</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="rating3" name="rating" value="3">
+                            <label for="rating3">3 Stars</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="rating2" name="rating" value="2">
+                            <label for="rating2">2 Stars</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="rating1" name="rating" value="1">
+                            <label for="rating1">1 Star</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group feedback-text-section">
+                    <label for="feedbackText">Your Comments:</label>
+                    <textarea id="feedbackText" name="feedbackText" rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Feedback</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Sample recipe data
+        const recipes = [
+            {
+                id: 1,
+                title: "Butter Chicken",
+                image: "https://realfood.tesco.com/media/images/1400x919-240222-TESCO-CEDAR-MARCH-STILLS-Butter-Chicken-Curry-TRF-0363-11-b633ee81-ae2c-4cb2-b672-771a7a0712a7-0-1400x919.jpg",
+                time: "45 mins",
+                type: "non-veg",
+                meal: "dinner",
+                vegan: false,
+                ingredients: [
+                    "500g chicken, cut into pieces",
+                    "1 cup yogurt",
+                    "2 tbsp butter",
+                    "1 onion, finely chopped",
+                    "2 tomatoes, pureed",
+                    "1 tbsp ginger-garlic paste",
+                    "1 tsp garam masala",
+                    "1 tsp turmeric powder",
+                    "1 tsp red chili powder",
+                    "1/2 cup fresh cream",
+                    "Salt to taste",
+                    "Fresh coriander for garnish"
+                ],
+                instructions: [
+                    "Marinate chicken with yogurt, ginger-garlic paste, turmeric, red chili powder, and salt for at least 30 minutes.",
+                    "Heat butter in a pan. Add onions and sautÃ© until golden brown.",
+                    "Add ginger-garlic paste and cook for 1 minute.",
+                    "Stir in tomato puree and cook until oil separates.",
+                    "Add marinated chicken and cook for 15-20 minutes until done.",
+                    "Sprinkle garam masala. Pour in fresh cream and stir. Simmer for 5 minutes.",
+                    "Garnish with fresh coriander and serve hot."
+                ]
+            },
+            {
+                id: 2,
+                title: "Palak Paneer",
+                image: "https://beextravegant.com/wp-content/uploads/2021/08/Palak-paneer-7-edited.jpg",
+                time: "30 mins",
+                type: "veg",
+                meal: "lunch",
+                vegan: false,
+                ingredients: [
+                    "200g paneer, cubed",
+                    "2 cups packed fresh spinach (palak)",
+                    "1 large onion, finely chopped",
+                    "1 large tomato, pureed",
+                    "1 tbsp ginger-garlic paste",
+                    "1 tsp cumin seeds",
+                    "1 tsp garam masala",
+                    "1/2 tsp turmeric powder",
+                    "1 tsp coriander powder",
+                    "1/4 tsp red chili powder (opt)",
+                    "2 tbsp cooking oil or ghee",
+                    "Salt to taste",
+                    "2 tbsp fresh cream (opt)"
+                ],
+                instructions: [
+                    "Blanch spinach, drain, and blend into a smooth puree.",
+                    "Heat oil/ghee, add cumin seeds.",
+                    "Add onions and sautÃ© until light golden.",
+                    "Add ginger-garlic paste, cook for 1 minute.",
+                    "Add tomato puree, cook until oil separates.",
+                    "Add spices (turmeric, coriander, chili powder, salt), cook for 1 minute.",
+                    "Pour in spinach puree, simmer for 5 minutes.",
+                    "Add paneer cubes, garam masala, and cream (if using).",
+                    "Simmer for 2-3 minutes. Serve hot."
+                ]
+            },
+            {
+                id: 3,
+                title: "Masala Dosa",
+                image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQv4F_s0QF9Q_xnKUxOdINmO_jVTnCiPB8QCA&s",
+                time: "60 mins (+ soak/ferment)",
+                type: "veg",
+                meal: "breakfast",
+                vegan: true,
+                // Assuming oil used, can be made non-vegan with ghee
+                ingredients: [
+                    "For Batter: 2 cups rice, 1/2 cup urad dal, 1/4 cup poha (flattened rice), 1 tsp fenugreek seeds, Salt to taste, Water as needed, Oil for cooking",
+                    "For Filling (Aloo Masala): 3 medium potatoes (boiled, peeled, mashed), 1 large onion (thinly sliced), 1 tsp mustard seeds, 1 tsp chana dal (optional), 1/2 tsp turmeric powder, 2-3 green chilies (finely chopped), 8-10 curry leaves, 1 tbsp cooking oil, Salt to taste, 2 tbsp chopped coriander leaves"
+                ],
+                instructions: [
+                    "Prepare Batter: Wash and soak rice & fenugreek seeds together, and urad dal separately for 4-6 hours. Soak poha for 30 minutes before grinding. Grind urad dal to a smooth, fluffy paste. Grind rice mixture to a slightly coarse paste. Mix both pastes, add salt, and enough water for a thick batter. Ferment in a warm place for 8-12 hours.",
+                    "Prepare Filling: Heat oil in a pan. Add mustard seeds and let them splutter. Add chana dal (if using) and sautÃ© until golden. Add curry leaves and green chilies. Add sliced onions and sautÃ© until translucent. Add turmeric powder and salt. Mix well. Add mashed potatoes and mix thoroughly. Cook for 2-3 minutes. Garnish with coriander leaves.",
+                    "Make Dosas: Stir the fermented batter gently. Heat a flat non-stick tawa or griddle. Pour a ladleful of batter onto the center and spread it outwards in a thin circular motion. Drizzle a teaspoon of oil around the edges. Cook on medium heat until the bottom is golden brown and crisp. Place a portion of the potato filling along the center. Fold the dosa in half or roll it up. Serve immediately with sambar and coconut chutney."
+                ]
+            },
+            {
+                id: 4,
+                title: "Chicken Biryani",
+                image: "https://www.licious.in/blog/wp-content/uploads/2022/06/chicken-hyderabadi-biryani-01-750x750.jpg",
+                time: "75 mins (+ marination)",
+                type: "non-veg",
+                meal: "lunch",
+                vegan: false,
+                ingredients: [
+                    "For Marination: 500g chicken pieces, 1/2 cup thick yogurt, 1 tbsp ginger-garlic paste, 1 tsp red chili powder, 1/2 tsp turmeric powder, 1 tsp garam masala powder, Salt to taste, 1/4 cup chopped mint leaves, 1/4 cup chopped coriander leaves, 1 tbsp lemon juice",
+                    "For Rice: 2 cups basmati rice (soaked for 30 mins), 6 cups water, 2 bay leaves, 4 green cardamoms, 4 cloves, 1-inch cinnamon stick, Salt to taste",
+                    "For Masala & Layering: 2 tbsp ghee or oil, 2 large onions (thinly sliced for frying - Birista), 1 large onion (finely chopped), 1 large tomato (chopped), 1 tbsp ginger-garlic paste, Whole spices (optional, same as for rice), 2 tbsp milk mixed with a pinch of saffron strands (optional), Fried onions (Birista), Extra mint and coriander leaves"
+                ],
+                instructions: [
+                    "Marinate chicken with all ingredients under 'For Marination' for at least 1 hour (preferably 2-3 hours in the refrigerator).",
+                    "Prepare Fried Onions (Birista): Heat oil/ghee and fry the thinly sliced onions until golden brown and crisp. Drain and set aside.",
+                    "Cook Rice: Bring water to a boil with whole spices and salt. Add soaked and drained rice. Cook until the rice is 70-80% cooked. Drain the rice completely and set aside.",
+                    "Prepare Chicken Masala: In the same pot or a heavy-bottomed pan, heat ghee/oil. Add chopped onions and sautÃ© until golden brown. Add ginger-garlic paste and sautÃ© for a minute. Add chopped tomatoes and cook until soft. Add the marinated chicken and cook on medium heat for 10-15 minutes until chicken is partially cooked and oil starts to separate.",
+                    "Assemble Biryani (Dum Cooking): Layer half of the cooked rice over the chicken masala. Sprinkle some birista, mint, and coriander leaves. Layer the remaining rice. Top with remaining birista, mint, coriander, and saffron milk (if using).",
+                    "Cover the pot tightly with a lid (seal with dough if possible for 'dum'). Cook on very low heat for 20-25 minutes.",
+                    "Rest the biryani for 10-15 minutes before opening. Fluff the rice gently with a fork. Serve hot with raita or salan."
+                ]
+            },
+            {
+                id: 5,
+                title: "Aloo Paratha",
+                image: "https://www.bigbasket.com/media/uploads/recipe/w-l/3538_1_1.jpg",
+                time: "40 mins",
+                type: "veg",
+                meal: "breakfast",
+                vegan: false,
+                // Can be made vegan using oil instead of ghee
+                ingredients: [
+                    "For Dough: 2 cups whole wheat flour (atta), Approx. 1 cup water, 1/2 tsp salt (optional), 1 tbsp oil or ghee (optional)",
+                    "For Filling: 3 medium potatoes (boiled, peeled, mashed smoothly), 1 small onion (finely chopped), 1-2 green chilies (finely chopped), 1/2 tsp cumin seeds (jeera), 1/4 tsp turmeric powder, 1/2 tsp garam masala, 1/2 tsp amchur powder (dry mango powder) or lemon juice, 2 tbsp chopped coriander leaves, Salt to taste",
+                    "Ghee or oil for cooking the parathas"
+                ],
+                instructions: [
+                    "Prepare Dough: In a bowl, combine flour and salt (if using). Gradually add water and knead into a soft, pliable dough. Add oil/ghee (if using) and knead again for a minute. Cover and let it rest for 15-20 minutes.",
+                    "Prepare Filling: In another bowl, combine mashed potatoes, chopped onion, green chilies, cumin seeds, turmeric powder, garam masala, amchur powder, coriander leaves, and salt. Mix everything well.",
+                    "Assemble Paratha: Divide the dough and the filling into equal portions (around 6-8). Take one dough ball, flatten it slightly, and roll it into a small circle (about 3-4 inches). Place one portion of the filling in the center. Bring the edges of the dough together to cover the filling and seal it tightly. Flatten the stuffed ball gently and dust with flour. Roll it out carefully into a paratha (about 6-7 inches diameter), ensuring the filling doesn't break out.",
+                    "Cook Paratha: Heat a flat tawa or griddle on medium heat. Place the rolled paratha on the hot tawa. Cook for about 30-40 seconds until small bubbles appear. Flip the paratha. Apply about 1/2 tsp of ghee or oil on the cooked side. Flip again and apply ghee/oil on the other side. Press gently with a spatula and cook until both sides are golden brown and cooked through, with some brown spots.",
+                    "Serve hot Aloo Paratha with yogurt (dahi), pickle (achar), or a dollop of butter."
+                ]
+            },
+            {
+                id: 6,
+                title: "Vegetable Pulao",
+                image: "https://vegecravings.com/wp-content/uploads/2016/07/veg-pulao-recipe-step-by-step-instructions.jpg",
+                time: "35 mins",
+                type: "veg",
+                meal: "lunch",
+                vegan: true,
+                // Assuming oil used, can be made non-vegan with ghee
+                ingredients: [
+                    "1.5 cups basmati rice (rinsed and soaked for 20-30 mins)",
+                    "1 cup mixed vegetables (chopped - carrots, peas, beans, potatoes, cauliflower)",
+                    "1 medium onion (thinly sliced)",
+                    "1 tbsp ginger-garlic paste",
+                    "1-2 green chilies (slit)",
+                    "Whole Spices: 1 tsp cumin seeds, 1 bay leaf, 2-3 cloves, 2 green cardamoms, 1-inch cinnamon stick",
+                    "Powdered Spices: 1/4 tsp turmeric powder (optional), 1/2 tsp garam masala",
+                    "2 tbsp cooking oil or ghee",
+                    "Approx. 2.5 cups water or vegetable broth",
+                    "Salt to taste",
+                    "2 tbsp chopped coriander leaves for garnish"
+                ],
+                instructions: [
+                    "Heat oil or ghee in a heavy-bottomed pot or pressure cooker.",
+                    "Add all the whole spices (cumin seeds, bay leaf, cloves, cardamom, cinnamon). SautÃ© for 30 seconds until fragrant.",
+                    "Add sliced onions and sautÃ© until they turn light golden brown.",
+                    "Add ginger-garlic paste and green chilies. SautÃ© for another minute.",
+                    "Add the chopped mixed vegetables and sautÃ© on medium heat for 2-3 minutes.",
+                    "Add the powdered spices (turmeric - if using, garam masala) and salt. Mix well.",
+                    "Drain the soaked rice completely and add it to the pot. SautÃ© gently for 1 minute, being careful not to break the rice grains.",
+                    "Add water or vegetable broth. Stir gently. Check salt and adjust if needed. Bring the mixture to a boil.",
+                    "For Pot Method: Cover the pot tightly, reduce the heat to low, and simmer for 15-20 minutes, or until all the water is absorbed and the rice is cooked.",
+                    "For Pressure Cooker Method: Close the lid and pressure cook for 2 whistles on medium heat. Let the pressure release naturally.",
+                    "Once cooked, let the pulao rest for 5-10 minutes before opening the lid. Fluff the rice gently with a fork. Garnish with chopped coriander leaves.",
+                    "Serve hot Vegetable Pulao with raita or plain yogurt."
+                ]
+            },
+            {
+                id: 7,
+                title: "Fish Curry (Goan Style)",
+                image: "https://5.imimg.com/data5/SELLER/Default/2024/9/450200199/YQ/YC/AI/230584086/fish-curry-half.jpg",
+                // Placeholder image URL
+                time: "40 mins",
+                type: "non-veg",
+                meal: "dinner",
+                vegan: false,
+                ingredients: [
+                    "500g fish, cut into pieces",
+                    "1 cup grated coconut",
+                    "4-5 dried red chilies",
+                    "1 tsp turmeric powder",
+                    "1 tsp coriander seeds",
+                    "1/2 tsp cumin seeds",
+                    "4-5 kokum petals (Garcinia indica) or 1 tbsp tamarind pulp",
+                    "1 onion, sliced",
+                    "2 tomatoes, chopped",
+                    "1 tbsp ginger-garlic paste",
+                    "2 tbsp oil",
+                    "Salt to taste"
+                ],
+                instructions: [
+                    "Grind grated coconut, dried red chilies, turmeric, coriander seeds, and cumin seeds with a little water to a smooth paste.",
+                    "Heat oil in a pan. Add sliced onions and sautÃ© until golden.",
+                    "Add ginger-garlic paste and cook for 1 minute.",
+                    "Add chopped tomatoes and cook until soft.",
+                    "Add the ground coconut paste and cook for 5-7 minutes, stirring continuously.",
+                    "Add fish pieces, kokum petals (or tamarind pulp), salt, and enough water for gravy.",
+                    "Bring to a boil, then simmer gently for 10-15 minutes until fish is cooked.",
+                    "Serve hot with rice."
+                ]
+            },
+            {
+                id: 8,
+                title: "Chapati",
+                image: "https://static.toiimg.com/thumb/61203720.cms?imgsize=670417&width=800&height=800",
+                // Placeholder image URL
+                time: "30 mins",
+                type: "veg",
+                meal: "accompaniment",
+                vegan: true,
+                ingredients: [
+                    "2 cups whole wheat flour",
+                    "Water as needed",
+                    "Salt to taste",
+                    "Ghee or oil (optional)"
+                ],
+                instructions: [
+                    "Mix whole wheat flour and salt in a bowl.",
+                    "Add water gradually and knead into a soft, smooth dough.",
+                    "Let the dough rest for 15-20 minutes.",
+                    "Divide the dough into small balls and roll each ball into a thin circle.",
+                    "Heat a tawa (griddle) on medium heat.",
+                    "Cook the chapati on both sides until golden brown spots appear.",
+                    "Puff up the chapati directly on the flame or using a clean cloth on the tawa.",
+                    "Apply ghee or oil if desired and serve hot."
+                ]
+            },
+            {
+                id: 9,
+                title: "Samosa",
+                image: "https://www.cubesnjuliennes.com/wp-content/uploads/2020/08/Best-Mutton-Keema-Samosa-Recipe-1-500x500.jpg",
+                // Placeholder image URL
+                time: "45 mins",
+                type: "veg",
+                meal: "snack",
+                vegan: true,
+                // Filling is usually vegan, check dough ingredients
+                ingredients: [
+                    "2 cups all-purpose flour",
+                    "4 tbsp oil or ghee",
+                    "Salt to taste",
+                    "Water as needed",
+                    "For filling:",
+                    "2 potatoes, boiled and mashed",
+                    "1/2 cup green peas",
+                    "1 tsp cumin seeds",
+                    "1/2 tsp coriander powder",
+                    "1/2 tsp garam masala",
+                    "1/4 tsp red chili powder",
+                    "Salt to taste",
+                    "Oil for frying"
+                ],
+                instructions: [
+                    "For the dough, mix flour, oil or ghee, and salt. Add water and knead into a firm dough.",
+                    "Cover and let rest for 15-20 minutes.",
+                    "For the filling, heat oil, add cumin seeds, green peas, and mashed potatoes.",
+                    "Add coriander powder, garam masala, red chili powder, and salt. Mix well.",
+                    "Let the filling cool.",
+                    "Divide the dough into small balls, roll into oval shapes, and cut into half.",
+                    "Form cones from the halves, fill with potato mixture, and seal the edges.",
+                    "Heat oil in a pan and deep fry the samosas on low heat until golden brown and crispy.",
+                    "Serve hot with chutney."
+                ]
+            },
+            {
+                id: 10,
+                title: "Gulab Jamun",
+                image: "https://almondhouse.com/cdn/shop/files/1_IMG_9491_1e1968b7-b144-49ba-a4ed-2659e95a3bcb.jpg?v=1703680462",
+                // Placeholder image URL
+                time: "1 hour",
+                type: "veg",
+                meal: "dessert",
+                vegan: false,
+                // Contains milk solids
+                ingredients: [
+                    "1 cup milk powder",
+                    "1/4 cup all-purpose flour",
+                    "2 tbsp ghee or butter",
+                    "Milk as needed to knead",
+                    "Oil or ghee for frying",
+                    "For sugar syrup:",
+                    "2 cups sugar",
+                    "1 cup water",
+                    "4-5 green cardamoms",
+                    "A few strands of saffron (optional)"
+                ],
+                instructions: [
+                    "For the sugar syrup, combine sugar and water in a pan. Bring to a boil and simmer until a slightly thick syrup is formed.",
+                    "Add cardamom and saffron to the syrup.",
+                    "For the gulab jamun, mix milk powder, all-purpose flour, and ghee.",
+                    "Add milk gradually and knead into a soft dough.",
+                    "Divide the dough into small balls.",
+                    "Heat oil or ghee in a pan on low heat.",
+                    "Fry the gulab jamun balls on low heat until golden brown.",
+                    "Drain excess oil and immediately put the fried balls into the warm sugar syrup.",
+                    "Let them soak in the syrup for at least 30 minutes before serving."
+                ]
+            },
+            {
+                id: 11,
+                title: "Idli Sambar",
+                image: "https://static.toiimg.com/thumb/msid-113810989,width-1280,height-720,resizemode-4/113810989.jpg",
+                // Placeholder image URL
+                time: "8 hours (includes fermentation)",
+                type: "veg",
+                meal: "breakfast",
+                vegan: true,
+                // Sambar is usually vegan, idli batter is vegan
+                ingredients: [
+                    "1 cup urad dal",
+                    "3 cups idli rice",
+                    "1 tsp fenugreek seeds",
+                    "Salt to taste",
+                    "For Sambar:",
+                    "1/2 cup toor dal",
+                    "Mixed vegetables (onions, tomatoes, drumsticks, carrots, etc.)",
+                    "Tamarind pulp",
+                    "Sambar powder",
+                    "Mustard seeds, curry leaves, asafoetida (for tempering)"
+                ],
+                instructions: [
+                    "Soak urad dal, rice, and fenugreek seeds separately for 4-6 hours.",
+                    "Grind into a smooth batter with water.",
+                    "Ferment the batter overnight.",
+                    "Steam idlis in idli molds until cooked.",
+                    "For sambar, cook toor dal and mixed vegetables.",
+                    "Add tamarind pulp, sambar powder, and salt. Simmer.",
+                    "Temper with mustard seeds, curry leaves, and asafoetida in oil or ghee and add to sambar.",
+                    "Serve hot idlis with sambar and chutney."
+                ]
+            },
+            {
+                id: 12,
+                title: "Vada Pav",
+                image: "https://blog.swiggy.com/wp-content/uploads/2024/11/Image-1_mumbai-vada-pav-1024x538.png",
+                // Placeholder image URL
+                time: "40 mins",
+                type: "veg",
+                meal: "snack",
+                vegan: true,
+                // Vada batter and filling are typically vegan, pav may contain dairy
+                ingredients: [
+                    "For Vada:",
+                    "4 potatoes, boiled and mashed",
+                    "Ginger-garlic-green chili paste",
+                    "Mustard seeds, curry leaves, asafoetida, turmeric (for tempering)",
+                    "Gram flour (besan)",
+                    "Rice flour (for crispiness)",
+                    "Salt, red chili powder",
+                    "Oil for frying",
+                    "Pav (bread rolls)",
+                    "Dry garlic chutney",
+                    "Green chutney",
+                    "Tamarind chutney"
+                ],
+                instructions: [
+                    "For vada filling, temper mustard seeds, curry leaves, asafoetida in oil. Add ginger-garlic-green chili paste and turmeric.",
+                    "Add mashed potatoes and salt. Mix well. Let cool.",
+                    "Make small balls from the potato mixture.",
+                    "Prepare a batter with gram flour, rice flour, salt, and red chili powder.",
+                    "Dip potato balls in the batter and deep fry until golden brown.",
+                    "Slit pav horizontally, spread dry garlic chutney, green chutney, and tamarind chutney.",
+                    "Place a hot vada inside the pav and serve."
+                ]
+            },
+            {
+                id: 13,
+                title: "Rajma Masala",
+                image: "https://myfoodstory.com/wp-content/uploads/2021/06/Rajma-Masala-4.jpg",
+                // Placeholder image URL
+                time: "2 hours (includes soaking)",
+                type: "veg",
+                meal: "dinner",
+                vegan: true,
+                ingredients: [
+                    "1 cup kidney beans (rajma)",
+                    "2 onions, finely chopped",
+                    "3 tomatoes, pureed",
+                    "1 tbsp ginger-garlic paste",
+                    "1 tsp cumin powder",
+                    "1 tsp coriander powder",
+                    "1 tsp red chili powder",
+                    "1/2 tsp turmeric powder",
+                    "1/2 tsp garam masala",
+                    "2 tbsp oil or ghee",
+                    "Salt to taste",
+                    "Fresh coriander for garnish"
+                ],
+                instructions: [
+                    "Soak kidney beans overnight.",
+                    "Pressure cook the soaked beans with salt until soft.",
+                    "Heat oil or ghee in a pan. Add onions and sautÃƒÂ© until golden brown.",
+                    "Add ginger-garlic paste and cook for 1 minute.",
+                    "Add tomato puree and cook until oil separates.",
+                    "Stir in cumin powder, coriander powder, red chili powder, and turmeric.",
+                    "Add the cooked kidney beans with their liquid. Simmer for 20-30 minutes, mashing some beans.",
+                    "Add garam masala and simmer for 5 minutes.",
+                    "Garnish with fresh coriander and serve hot with rice or roti."
+                ]
+            },
+            {
+                id: 14,
+                title: "Dhokla",
+                image: "https://madhurasrecipe.com/wp-content/uploads/2022/12/Nylon-Dhokla-1.jpg",
+                // Placeholder image URL
+                time: "30 mins",
+                type: "veg",
+                meal: "snack",
+                vegan: true,
+                // Typically vegan
+                ingredients: [
+                    "1 cup besan (gram flour)",
+                    "1/4 cup semolina (sooji)",
+                    "1 cup yogurt (can use vegan yogurt or skip for a variation)",
+                    "1 tsp ginger-green chili paste",
+                    "1/4 tsp turmeric powder",
+                    "1/2 tsp fruit salt (Eno)",
+                    "Salt to taste",
+                    "Water as needed",
+                    "For tempering:",
+                    "1 tbsp oil",
+                    "1 tsp mustard seeds",
+                    "Curry leaves",
+                    "Green chilies, slit",
+                    "1 tbsp sugar",
+                    "2 tbsp water"
+                ],
+                instructions: [
+                    "In a bowl, mix besan, semolina, yogurt (if using), ginger-green chili paste, turmeric, and salt.",
+                    "Add water gradually to make a smooth batter.",
+                    "Grease a steaming pan.",
+                    "Just before steaming, add fruit salt to the batter and mix gently.",
+                    "Pour the batter into the greased pan and steam for 15-20 minutes until firm.",
+                    "Let cool, then cut into pieces.",
+                    "For tempering, heat oil, add mustard seeds, curry leaves, and green chilies.",
+                    "Add sugar and water, bring to a boil.",
+                    "Pour the tempering over the dhokla pieces.",
+                    "Serve."
+                ]
+            },
+            {
+                id: 15,
+                title: "Pani Puri",
+                image: "https://www.squarecut.net/wp-content/uploads/2024/08/pani-puri-snack-alchemy_1170794-90851.jpg",
+                // Placeholder image URL
+                time: "45 mins",
+                type: "veg",
+                meal: "snack",
+                vegan: true,
+                ingredients: [
+                    "Puri ( à¤—à¥‹à¤²à¤—à¤ªà¥à¤ªà¤¾ / à¤ªà¤¾à¤¨à¥€ à¤ªà¥‚à¤°à¥€)",
+                    "Boiled potatoes, mashed",
+                    "Boiled chickpeas or moong sprouts",
+                    "Finely chopped onions",
+                    "Sev (crispy gram flour noodles)",
+                    "For Pani (water):",
+                    "Mint leaves",
+                    "Coriander leaves",
+                    "Green chilies",
+                    "Ginger",
+                    "Tamarind pulp",
+                    "Jaggery or sugar",
+                    "Roasted cumin powder",
+                    "Chaat masala",
+                    "Black salt",
+                    "Cold water"
+                ],
+                instructions: [
+                    "For the pani, blend mint leaves, coriander leaves, green chilies, and ginger with a little water to a smooth paste.",
+                    "Mix the paste with tamarind pulp, jaggery or sugar, roasted cumin powder, chaat masala, black salt, and cold water.",
+                    "Adjust taste.",
+                    "Make a filling by mixing mashed potatoes, boiled chickpeas or moong sprouts, chopped onions, and a pinch of salt and chaat masala.",
+                    "Make a small hole in each puri, fill with a spoonful of the potato mixture.",
+                    "Fill the puri with the prepared pani and top with sev.",
+                    "Serve immediately."
+                ]
+            },
+            {
+                id: 16,
+                title: "Aloo Paratha",
+                image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTF2Wej8OLes1eQWItvW55-fkpS0t44BUCsZw&s",
+                // Placeholder image URL
+                time: "40 mins",
+                type: "veg",
+                meal: "breakfast",
+                vegan: false,
+                // Contains ghee
+                ingredients: [
+                    "2 cups whole wheat flour",
+                    "Water as needed",
+                    "Salt to taste",
+                    "Ghee or oil",
+                    "For filling:",
+                    "3 potatoes, boiled and mashed",
+                    "Finely chopped onions",
+                    "Chopped green chilies",
+                    "Chopped coriander leaves",
+                    "Cumin powder",
+                    "Coriander powder",
+                    "Garam masala",
+                    "Salt to taste"
+                ],
+                instructions: [
+                    "Knead a soft dough with whole wheat flour, salt, and water.",
+                    "Let the dough rest for 15 minutes.",
+                    "For the filling, mix mashed potatoes with chopped onions, green chilies, coriander leaves, cumin powder, coriander powder, garam masala, and salt.",
+                    "Divide the dough and filling into equal portions.",
+                    "Take a portion of dough, flatten it, place a portion of filling in the center, and seal the edges.",
+                    "Gently roll out the stuffed dough into a paratha.",
+                    "Cook the paratha on a hot tawa with ghee or oil until golden brown spots appear on both sides.",
+                    "Serve hot with yogurt, pickle, or butter."
+                ]
+            },
+            {
+                id: 17,
+                title: "Chicken Tikka Masala",
+                image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3lEk9RY_gs_9QJlgRN8Co9kFsy68hhOst5A&s",
+                // Placeholder image URL
+                time: "50 mins",
+                type: "non-veg",
+                meal: "dinner",
+                vegan: false,
+                ingredients: [
+                    "500g chicken, cut into pieces",
+                    "1 cup yogurt",
+                    "2 tbsp tandoori masala",
+                    "1 tsp ginger-garlic paste",
+                    "Salt to taste",
+                    "For the sauce:",
+                    "2 tbsp oil",
+                    "1 onion, chopped",
+                    "2 tomatoes, pureed",
+                    "1 tbsp ginger-garlic paste",
+                    "1 tsp garam masala",
+                    "1/2 tsp turmeric powder",
+                    "1/2 tsp red chili powder",
+                    "1/2 cup fresh cream",
+                    "Fresh coriander for garnish"
+                ],
+                instructions: [
+                    "Marinate chicken with yogurt, tandoori masala, ginger-garlic paste, and salt. Let it marinate for at least 30 minutes.",
+                    "Grill or pan-fry the marinated chicken until cooked.",
+                    "For the sauce, heat oil in a pan. Add onions and sautÃ© until golden.",
+                    "Add ginger-garlic paste and cook for 1 minute.",
+                    "Stir in tomato puree and cook until oil separates.",
+                    "Add garam masala, turmeric powder, and red chili powder. Cook for a minute.",
+                    "Add the cooked chicken pieces to the sauce.",
+                    "Pour in fresh cream and simmer for 5-7 minutes.",
+                    "Garnish with fresh coriander and serve hot with naan or rice."
+                ]
+            },
+            {
+                id: 18,
+                title: "Chole Bhature",
+                image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqy4TT1H_XcK1OWBTEnFt7PpYsE8gt0x-34Q&s",
+                // Placeholder image URL
+                time: "3 hours (includes soaking)",
+                type: "veg",
+                meal: "lunch",
+                vegan: false,
+                // Bhature dough may contain yogurt
+                ingredients: [
+                    "For Chole:",
+                    "1 cup chickpeas, soaked overnight",
+                    "2 onions, chopped",
+                    "3 tomatoes, pureed",
+                    "1 tbsp ginger-garlic paste",
+                    "Chole masala",
+                    "Cumin seeds, coriander powder, red chili powder, turmeric, garam masala",
+                    "Tea bags (for color)",
+                    "Oil",
+                    "Salt to taste",
+                    "For Bhature:",
+                    "2 cups all-purpose flour",
+                    "1/4 cup semolina (sooji)",
+                    "2 tbsp yogurt",
+                    "1/2 tsp baking soda",
+                    "Sugar, salt to taste",
+                    "Warm water as needed",
+                    "Oil for frying"
+                ],
+                instructions: [
+                    "For chole, pressure cook soaked chickpeas with tea bags and salt until soft.",
+                    "Heat oil in a pan. Add cumin seeds. Add onions and sautÃƒÂ© until golden brown.",
+                    "Add ginger-garlic paste and cook.",
+                    "Add tomato puree and cook until oil separates.",
+                    "Add chole masala, coriander powder, red chili powder, turmeric, and garam masala. Cook.",
+                    "Add the cooked chickpeas and simmer for 15-20 minutes.",
+                    "For bhature, mix flour, semolina, yogurt, baking soda, sugar, and salt.",
+                    "Knead a soft dough using warm water.",
+                    "Let the dough rest for 1-2 hours.",
+                    "Divide dough, roll into oval shapes, and deep fry in hot oil until puffed and golden.",
+                    "Serve hot chole with bhature."
+                ]
+            },
+            {
+                id: 19,
+                title: "Paneer Tikka",
+                image: "https://myspicetrunk.com/wp-content/uploads/2019/11/WhatsApp-Image-2019-11-14-at-5.00.10-PM.jpeg?v=1613927430",
+                // Placeholder image URL
+                time: "40 mins (includes marination)",
+                type: "veg",
+                meal: "starter",
+                vegan: false,
+                // Contains paneer and yogurt
+                ingredients: [
+                    "250g paneer, cubed",
+                    "1 bell pepper (capsicum), cubed",
+                    "1 onion, cubed",
+                    "1 tomato, deseeded and cubed",
+                    "For marination:",
+                    "1 cup thick yogurt",
+                    "2 tbsp gram flour (besan)",
+                    "1 tbsp ginger-garlic paste",
+                    "1 tsp red chili powder",
+                    "1 tsp turmeric powder",
+                    "1 tsp coriander powder",
+                    "1/2 tsp cumin powder",
+                    "1 tsp chaat masala",
+                    "Salt to taste",
+                    "Lemon juice",
+                    "Oil for grilling or pan-frying"
+                ],
+                instructions: [
+                    "In a bowl, mix yogurt, gram flour, ginger-garlic paste, all dry spices, salt, and lemon juice.",
+                    "Add paneer cubes and vegetables to the marinade. Mix well and let marinate for at least 30 minutes.",
+                    "Thread the marinated paneer and vegetables onto skewers.",
+                    "Grill in an oven or pan-fry with a little oil until cooked and slightly charred.",
+                    "Serve hot with mint chutney and onion rings."
+                ]
+            },
+            {
+                id: 20,
+                title: "Vegetable Pulao",
+                image: "https://www.archanaskitchen.com/images/archanaskitchen/Indian_Rice/Chettinad_Vegetable_Pulao_Recipe_with_Kohinoor_Platinum_Basmati_Rice_-1_400.jpg",
+                // Placeholder image URL
+                time: "30 mins",
+                type: "veg",
+                meal: "lunch",
+                vegan: true,
+                // Can be made vegan by using oil instead of ghee
+                ingredients: [
+                    "1 cup basmati rice",
+                    "2 cups mixed vegetables (carrots, peas, beans, potatoes)",
+                    "2 tbsp ghee or oil",
+                    "1 tsp cumin seeds",
+                    "Whole spices (bay leaf, cinnamon, cardamom, cloves)",
+                    "1 onion, sliced",
+                    "1 tsp ginger-garlic paste",
+                    "1/2 tsp turmeric powder",
+                    "1 tsp garam masala",
+                    "Salt to taste",
+                    "2 cups water"
+                ],
+                instructions: [
+                    "Wash and soak basmati rice for 20 minutes.",
+                    "Heat ghee or oil in a pot. Add cumin seeds and whole spices.",
+                    "Add sliced onions and sautÃƒÂ© until golden.",
+                    "Add ginger-garlic paste and cook for 1 minute.",
+                    "Add mixed vegetables, turmeric powder, garam masala, and salt. SautÃƒÂ© for a few minutes.",
+                    "Drain the soaked rice and add to the pot. Mix gently.",
+                    "Pour in water and bring to a boil.",
+                    "Reduce heat to low, cover, and cook until the rice is cooked and water is absorbed.",
+                    "Let it rest for 5 minutes before fluffing with a fork.",
+                    "Serve hot with raita or curry."
+                ]
+            },
+            // Add more recipes here following the same structure
+        ];
+
+        // DOM Elements
+        const sidebarToggle = document.querySelector('.sidebar-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.overlay');
+        const homePage = document.getElementById('home-page');
+        const registrationPage = document.getElementById('registration-page');
+        const mainPage = document.getElementById('main-page');
+        const mainPageTitle = document.getElementById('main-page-title');
+        const recipeSearchBox = document.getElementById('recipe-search-box'); // Get the search box element
+        const aboutPage = document.getElementById('about-page');
+        const recipeDetail = document.getElementById('recipe-detail');
+        const registerNowBtn = document.getElementById('register-now-btn');
+        const registrationForm = document.getElementById('registration-form');
+        const backToRecipesBtn = document.getElementById('back-to-recipes-btn');
+        const ingredientInput = document.getElementById('ingredient-input');
+        const addIngredientBtn = document.getElementById('add-ingredient-btn');
+        const ingredientsTags = document.getElementById('ingredients-tags');
+        const searchRecipesBtn = document.getElementById('search-recipes-btn');
+        const recipesContainer = document.getElementById('recipes-container');
+        const recipeTypeFilter = document.getElementById('recipe-type');
+        const mealTypeFilter = document.getElementById('meal-type');
+        const detailRecipeImg = document.getElementById('detail-recipe-img');
+        const detailRecipeTitle = document.getElementById('detail-recipe-title');
+        const detailRecipeTime = document.getElementById('detail-recipe-time');
+        const detailRecipeType = document.getElementById('detail-recipe-type');
+        const detailRecipeMeal = document.getElementById('detail-recipe-meal');
+        const detailRecipeIngredients = document.getElementById('detail-recipe-ingredients');
+        const detailRecipeInstructions = document.getElementById('detail-recipe-instructions');
+        const currentYearSpan = document.getElementById('current-year');
+        const aboutBackHomeBtn = document.getElementById('about-back-home-btn'); // Button on About page
+        const detailFavouriteBtn = document.getElementById('detail-favourite-btn'); // Favourite button on detail page
+
+        // Feedback Modal Elements
+        const feedbackLink = document.querySelector('.feedback-link'); // The "Feedback" link in the footer
+        const feedbackModal = document.getElementById('feedbackModal');
+        const closeFeedbackModalBtn = document.getElementById('closeFeedbackModal');
+        const feedbackForm = document.getElementById('feedbackForm');
+
+
+        // Sidebar links
+        const homeLinkSidebar = document.querySelector('.sidebar-menu .home-link');
+        const favouritesLinkSidebar = document.querySelector('.sidebar-menu .favourites-link'); // Favourites link
+        const aboutLinkSidebar = document.querySelector('.sidebar-menu .about-link');
+
+        // Footer links
+        const homeLinkFooter = document.querySelector('.footer-home-link');
+        const favouritesLinkFooter = document.querySelector('.footer-favourites-link'); // Favourites link
+        const aboutLinkFooter = document.querySelector('.footer-about-link');
+
+        // Variables
+        let selectedIngredients = [];
+        let favourites = getFavouritesFromStorage(); // Load favourites from localStorage
+
+        // Functions
+
+        // Load favourites from localStorage
+        function getFavouritesFromStorage() {
+            const storedFavourites = localStorage.getItem('recipeFavourites');
+            try {
+                return storedFavourites ? JSON.parse(storedFavourites) : [];
+            } catch (e) {
+                console.error("Failed to parse favourites from localStorage:", e);
+                return []; // Return empty array in case of parsing error
+            }
+        }
+
+        // Save favourites to localStorage
+        function saveFavouritesToStorage() {
+            try {
+                localStorage.setItem('recipeFavourites', JSON.stringify(favourites));
+            } catch (e) {
+                 console.error("Failed to save favourites to localStorage:", e);
+                 alert("Could not save favourites. Local storage might be full or disabled.");
+            }
+        }
+
+        // Check if a recipe is favourited
+        function isFavourite(recipeId) {
+            // Ensure recipeId is treated as a number for consistent comparison
+            return favourites.includes(parseInt(recipeId, 10));
+        }
+
+        // Add or remove a recipe from favourites
+        function toggleFavourite(recipeId) {
+            const id = parseInt(recipeId, 10); // Ensure ID is a number
+            const index = favourites.indexOf(id);
+            if (index > -1) {
+                // Already in favourites, remove it
+                favourites.splice(index, 1);
+                console.log(`Removed recipe ${id} from favourites`);
+            } else {
+                // Not in favourites, add it
+                favourites.push(id);
+                console.log(`Added recipe ${id} to favourites`);
+            }
+            saveFavouritesToStorage(); // Save changes
+            // Update UI elements that show favourite status
+            updateFavouriteButtons(id, isFavourite(id));
+            // If currently on Favourites page, re-render it
+            if (mainPage.style.display !== 'none' && mainPageTitle.textContent === 'Your Favourites') {
+                 renderFavourites();
+            }
+        }
+
+         // Update the visual state of favourite buttons for a given recipe ID
+        function updateFavouriteButtons(recipeId, isFav) {
+             // Update buttons on recipe cards (if visible)
+            const cardButtons = document.querySelectorAll(`.favourite-btn[data-id="${recipeId}"]`);
+            cardButtons.forEach(button => {
+                const icon = button.querySelector('i');
+                if (isFav) {
+                    button.classList.add('active');
+                    icon.classList.remove('far', 'fa-heart');
+                    icon.classList.add('fas', 'fa-heart');
+                    icon.setAttribute('aria-label', 'Remove from favourites');
+                } else {
+                    button.classList.remove('active');
+                    icon.classList.remove('fas', 'fa-heart');
+                    icon.classList.add('far', 'fa-heart');
+                     icon.setAttribute('aria-label', 'Favourite this recipe');
+                }
+            });
+
+            // Update button on the detail page (if visible and matches current recipe)
+            if (recipeDetail.style.display !== 'none' && parseInt(detailFavouriteBtn.getAttribute('data-id'), 10) === recipeId) {
+                 const detailIcon = detailFavouriteBtn.querySelector('i');
+                 if (isFav) {
+                    detailFavouriteBtn.classList.add('active');
+                    detailIcon.classList.remove('far', 'fa-heart');
+                    detailIcon.classList.add('fas', 'fa-heart');
+                     detailIcon.setAttribute('aria-label', 'Remove from favourites');
+                 } else {
+                    detailFavouriteBtn.classList.remove('active');
+                    detailIcon.classList.remove('fas', 'fa-heart');
+                    detailIcon.classList.add('far', 'fa-heart');
+                     detailIcon.setAttribute('aria-label', 'Favourite this recipe');
+                 }
+            }
+        }
+
+
+        function hideAllPages() {
+            homePage.style.display = 'none';
+            registrationPage.style.display = 'none';
+            mainPage.style.display = 'none';
+            recipeDetail.style.display = 'none';
+            aboutPage.style.display = 'none';
+            // Ensure focus is managed, e.g., move to the top of the new page
+            document.body.focus();
+        }
+
+        function showHomePage(event) {
+            if (event) event.preventDefault(); // Prevent default link behavior
+            hideAllPages();
+            homePage.style.display = 'block';
+            closeSidebarIfNeeded();
+            window.scrollTo(0, 0); // Scroll to top
+        }
+
+        function showAboutPage(event) {
+            if (event) event.preventDefault(); // Prevent default link behavior
+            hideAllPages();
+            aboutPage.style.display = 'block';
+            closeSidebarIfNeeded();
+            window.scrollTo(0, 0); // Scroll to top
+        }
+
+         function showFavouritesPage(event) {
+            if (event) event.preventDefault(); // Prevent default link behavior
+            hideAllPages();
+            mainPage.style.display = 'block';
+            closeSidebarIfNeeded();
+
+            // Change title and hide search box for Favourites page
+            mainPageTitle.textContent = 'Your Favourites';
+            recipeSearchBox.style.display = 'none'; // Hide the search/filter box
+
+            renderFavourites(); // Render only favourited recipes
+
+            window.scrollTo(0, 0); // Scroll to top
+         }
+
+         // Renders only the recipes that are currently in the 'favourites' array
+         function renderFavourites() {
+             const favouritedRecipes = recipes.filter(recipe => isFavourite(recipe.id));
+             if (favouritedRecipes.length === 0) {
+                 recipesContainer.innerHTML = '<p class="message">You have no favourite recipes yet. Find recipes you like and click the heart icon to add them here!</p>';
+             } else {
+                 renderRecipes(favouritedRecipes); // Reuse the existing render function
+             }
+         }
+
+
+        function toggleSidebar() {
+            const isActive = sidebar.classList.contains('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            // Manage aria-expanded attribute for accessibility
+            sidebarToggle.setAttribute('aria-expanded', !isActive);
+             // Manage aria-hidden attribute for sidebar and main content
+             sidebar.setAttribute('aria-hidden', isActive); // Sidebar is hidden when not active
+             // Assuming main content area is the inverse of sidebar state for screen readers
+             document.querySelector('main, .hero, .registration-page, .main-page, .recipe-detail').setAttribute('aria-hidden', !isActive);
+        }
+
+        function closeSidebarIfNeeded() {
+            if (sidebar.classList.contains('active')) {
+                toggleSidebar(); // Toggle will close it
+            }
+        }
+
+        function showRegistrationPage() {
+            hideAllPages();
+            registrationPage.style.display = 'block';
+            window.scrollTo(0, 0); // Scroll to top
+            // Focus the first input field
+            document.getElementById('name')?.focus();
+        }
+
+        function handleRegistration(e) {
+            e.preventDefault(); // Prevent default form submission
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const emailError = document.getElementById('email-error');
+            const passwordError = document.getElementById('password-error');
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            let isValid = true;
+
+            // Reset previous errors
+            emailError.style.display = 'none';
+            emailInput.style.borderColor = '#ddd';
+            passwordError.style.display = 'none';
+            passwordInput.style.borderColor = '#ddd';
+            nameInput.style.borderColor = '#ddd'; // Reset name border
+
+            // Name validation (simple check if empty)
+            if (!nameInput.value.trim()) {
+                nameInput.style.borderColor = '#ff5252';
+                isValid = false;
+            }
+
+            // Basic Gmail validation (ends with @gmail.com and has something before it)
+            if (!email || !/^[^\s@]+@gmail\.com$/i.test(email)) {
+                emailError.style.display = 'block';
+                emailInput.style.borderColor = '#ff5252';
+                isValid = false;
+            }
+
+            // Basic Password length validation
+            if (password.length < 6) {
+                passwordError.textContent = 'Password must be at least 6 characters';
+                passwordError.style.display = 'block';
+                passwordInput.style.borderColor = '#ff5252';
+                isValid = false;
+            }
+
+            if (isValid) {
+                // Simulate successful registration
+                console.log('Registration Data:', {
+                    name: nameInput.value.trim(),
+                    email: email,
+                    password: '[Hidden]', // Don't log password
+                    gender: registrationForm.elements['gender'].value
+                });
+                alert('Registration successful! You can now search for recipes.');
+                showMainPage(true); // Proceed to the main recipe search page and clear inputs
+                 // Clear registration form fields after successful submission
+                 registrationForm.reset();
+            } else {
+                // Focus the first invalid field for better UX
+                if (!nameInput.value.trim()) nameInput.focus();
+                else if (emailInput.style.borderColor === 'rgb(255, 82, 82)') emailInput.focus(); // Check computed style color
+                else if (passwordInput.style.borderColor === 'rgb(255, 82, 82)') passwordInput.focus();
+            }
+        }
+
+        // Shows the main search page.
+        // clearInputs: boolean - if true, resets search criteria and shows initial prompt.
+        function showMainPage(clearInputs = false) {
+            hideAllPages();
+            mainPage.style.display = 'block';
+            closeSidebarIfNeeded();
+
+            // Reset title and show search box for Search page
+            mainPageTitle.textContent = 'Find Your Perfect Recipe';
+            recipeSearchBox.style.display = 'block'; // Show the search/filter box
+
+            if (clearInputs) {
+                // Clear ingredients array and tags
+                selectedIngredients = [];
+                renderIngredientsTags();
+                // Reset filters to default
+                recipeTypeFilter.value = 'all';
+                mealTypeFilter.value = 'all';
+                ingredientInput.value = ''; // Clear the text input box as well
+                // Display the initial prompt message
+                recipesContainer.innerHTML = '<p class="message">Enter ingredients and select filters, then click "Search Recipes" to find your perfect meal!</p>';
+            } else {
+                // If not clearing inputs, and the search box is visible, it means we came back from detail,
+                // so keep the current search results or the initial prompt if no search was done.
+                 if (recipeSearchBox.style.display !== 'none') {
+                    if (recipesContainer.children.length === 0 || recipesContainer.querySelector('p.message')) {
+                         recipesContainer.innerHTML = '<p class="message">Enter ingredients and select filters, then click "Search Recipes" to find your perfect meal!</p>';
+                    }
+                 }
+                // If the search box is hidden, it means we were on the Favourites page,
+                // so re-render favourites. This handles the back button from detail view on Favourites.
+                 else {
+                     renderFavourites();
+                 }
+            }
+
+            window.scrollTo(0, 0); // Scroll to top
+            // Focus the ingredient input field if clearing or initially loading
+            if (clearInputs) ingredientInput.focus();
+        }
+
+        function addIngredient() {
+            const ingredient = ingredientInput.value.trim().toLowerCase();
+            if (ingredient && !selectedIngredients.includes(ingredient)) {
+                selectedIngredients.push(ingredient);
+                renderIngredientsTags();
+                ingredientInput.value = '';
+                ingredientInput.focus();
+            } else if (ingredient && selectedIngredients.includes(ingredient)) {
+                // Optionally notify user if ingredient already added
+                // alert(`"${ingredientInput.value.trim()}" is already in the list.`);
+                // Highlight the existing tag briefly? (More complex UX)
+                ingredientInput.value = ''; // Still clear input
+                ingredientInput.focus();
+            } else {
+                // If input is empty, just focus
+                ingredientInput.focus();
+            }
+        }
+
+        function removeIngredient(ingredientToRemove) {
+            selectedIngredients = selectedIngredients.filter(i => i !== ingredientToRemove);
+            renderIngredientsTags();
+            // Focus the input field after removing a tag for quick addition of next
+            ingredientInput.focus();
+            // DO NOT automatically search here - wait for button click
+            // searchRecipes();
+        }
+
+        function renderIngredientsTags() {
+            ingredientsTags.innerHTML = ''; // Clear existing tags
+            if (selectedIngredients.length === 0) {
+                ingredientsTags.style.minHeight = '20px'; // Keep min-height
+                return;
+            }
+            selectedIngredients.forEach(ingredient => {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.textContent = ingredient; // Display the ingredient text
+
+                const removeSpan = document.createElement('span');
+                removeSpan.className = 'tag-remove';
+                removeSpan.innerHTML = '&times;'; // 'x' symbol
+                removeSpan.setAttribute('aria-label', `Remove ${ingredient}`);
+                removeSpan.setAttribute('role', 'button');
+                removeSpan.tabIndex = 0; // Make it focusable
+
+                // Event listener for click
+                removeSpan.addEventListener('click', function () {
+                    removeIngredient(ingredient);
+                });
+
+                // Event listener for Enter/Space key press for accessibility
+                removeSpan.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault(); // Prevent page scroll on Space
+                        removeIngredient(ingredient);
+                    }
+                });
+
+                tag.appendChild(removeSpan);
+                ingredientsTags.appendChild(tag);
+            });
+        }
+
+        // --- Function called ONLY by Search Button ---
+        function searchRecipes() {
+            const recipeType = recipeTypeFilter.value;
+            const mealType = mealTypeFilter.value;
+            console.log("Searching with Ingredients:", selectedIngredients, "Type:", recipeType, "Meal:", mealType);
+
+            // Filter the main recipes array based on current criteria
+            const currentFilteredRecipes = recipes.filter(recipe => {
+                let match = true;
+
+                // Filter by Recipe Type (veg/non-veg/vegan)
+                if (match && recipeType !== 'all') {
+                    if (recipeType === 'vegan') {
+                        // Only match if the recipe is explicitly marked as vegan
+                        if (!recipe.vegan) match = false;
+                    } else if (recipeType === 'veg') {
+                        // Match if recipe type is 'veg' OR if it's 'vegan' (vegan is vegetarian)
+                        if (recipe.type !== 'veg' && !recipe.vegan) match = false;
+                    } else {
+                        // Handles 'non-veg'
+                        // Only match if the recipe type is exactly 'non-veg'
+                        if (recipe.type !== recipeType) match = false;
+                    }
+                }
+
+                // Filter by Meal Type (breakfast, lunch, etc.)
+                if (match && mealType !== 'all') {
+                    // Ensure recipe.meal exists and matches
+                    if (!recipe.meal || recipe.meal.toLowerCase() !== mealType.toLowerCase()) {
+                        match = false;
+                    }
+                }
+
+                // Filter by Ingredients (check if ALL selected ingredients are present)
+                if (match && selectedIngredients.length > 0) {
+                    // Normalize recipe ingredients to lowercase strings for comparison
+                    const recipeIngredientsLower = recipe.ingredients.map(ing => (typeof ing === 'string' ? ing.toLowerCase() : JSON.stringify(ing).toLowerCase()));
+
+                    // Check if *every* selected ingredient is *included* in *any* of the recipe's ingredients
+                    const hasAllIngredients = selectedIngredients.every(selIng =>
+                        recipeIngredientsLower.some(recIng => recIng.includes(selIng))
+                    );
+
+                    if (!hasAllIngredients) {
+                        match = false;
+                    }
+                }
+
+                return match;
+            });
+
+            console.log("Found recipes:", currentFilteredRecipes.length);
+            // Render the results (or 'not found' message)
+            renderRecipes(currentFilteredRecipes);
+
+            // Scroll to the results section after search
+            recipesContainer.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // --- Renders the recipes passed to it ---
+        function renderRecipes(recipesToRender) {
+            recipesContainer.innerHTML = ''; // Clear previous results or placeholder
+
+            if (recipesToRender.length === 0) {
+                // Display a user-friendly 'not found' message
+                recipesContainer.innerHTML = '<p class="message">No recipes found matching your criteria. Try different ingredients or filters.</p>';
+                return;
+            }
+
+            recipesToRender.forEach(recipe => {
+                const recipeCard = document.createElement('div');
+                recipeCard.className = 'recipe-card';
+
+                // Determine display type (Vegan > Vegetarian > Non-Vegetarian)
+                let displayType = 'Unknown'; // Default
+                if (recipe.vegan) {
+                    displayType = 'Vegan';
+                } else if (recipe.type === 'veg') {
+                    displayType = 'Vegetarian';
+                } else if (recipe.type === 'non-veg') {
+                    displayType = 'Non-Vegetarian';
+                }
+
+                let displayMeal = recipe.meal ? recipe.meal.charAt(0).toUpperCase() + recipe.meal.slice(1) : 'Any';
+
+                // Check if this recipe is a favourite to set initial icon state
+                const isFav = isFavourite(recipe.id);
+                const heartIconClass = isFav ? 'fas' : 'far'; // Solid heart if favourite, regular if not
+                const heartButtonActiveClass = isFav ? 'active' : '';
+                 const favouriteAriaLabel = isFav ? 'Remove from favourites' : 'Favourite this recipe';
+
+
+                recipeCard.innerHTML = `
+                 <div class="favourite-btn ${heartButtonActiveClass}" data-id="${recipe.id}" role="button" aria-label="${favouriteAriaLabel}" tabindex="0">
+                        <i class="${heartIconClass} fa-heart"></i>
+                    </div>
+                 <div class="recipe-img">
+                     <img src="${recipe.image}" alt="${recipe.title}" loading="lazy">
+                 </div>
+                 <div class="recipe-info">
+                     <h3>${recipe.title}</h3>
+                     <div class="recipe-meta">
+                         <span><i class="fas fa-clock" aria-hidden="true"></i> ${recipe.time || 'N/A'}</span>
+                         <span><i class="fas fa-leaf" aria-hidden="true"></i> ${displayType}</span>
+                         <span><i class="fas fa-concierge-bell" aria-hidden="true"></i> ${displayMeal}</span>
+                     </div>
+                     <a href="#" class="view-recipe-btn" data-id="${recipe.id}">View Recipe</a>
+                 </div>
+             `;
+                recipesContainer.appendChild(recipeCard);
+            });
+
+            // Add event listeners to the newly created buttons *after* they are added to the DOM
+
+            // Event listeners for 'View Recipe' buttons
+            recipesContainer.querySelectorAll('.view-recipe-btn').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const recipeId = parseInt(this.getAttribute('data-id'), 10); // Use radix 10
+                    showRecipeDetail(recipeId);
+                });
+            });
+
+            // Event listeners for the new 'Favourite' buttons on cards
+            recipesContainer.querySelectorAll('.favourite-btn').forEach(favBtn => {
+                 const recipeId = parseInt(favBtn.getAttribute('data-id'), 10);
+                favBtn.addEventListener('click', function() {
+                    toggleFavourite(recipeId);
+                });
+                 // Also add keyboard support for accessibility
+                 favBtn.addEventListener('keydown', function(e) {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         e.preventDefault(); // Prevent page scroll on Space
+                         toggleFavourite(recipeId);
+                     }
+                 });
+            });
+        }
+
+
+        function showRecipeDetail(recipeId) {
+            const recipe = recipes.find(r => r.id === recipeId);
+            if (!recipe) {
+                console.error("Recipe not found for ID:", recipeId);
+                // Optionally show an error message to the user
+                return;
+            }
+
+            // Determine display type (Vegan > Vegetarian > Non-Vegetarian)
+            let displayType = 'Unknown'; // Default
+            if (recipe.vegan) {
+                displayType = 'Vegan';
+            } else if (recipe.type === 'veg') {
+                displayType = 'Vegetarian';
+            } else if (recipe.type === 'non-veg') {
+                displayType = 'Non-Vegetarian';
+            }
+
+            let displayMeal = recipe.meal ? recipe.meal.charAt(0).toUpperCase() + recipe.meal.slice(1) : 'Any';
+
+            // Populate Details
+            detailRecipeImg.src = recipe.image;
+            detailRecipeImg.alt = recipe.title;
+            detailRecipeTitle.textContent = recipe.title;
+            detailRecipeTime.innerHTML = `<i class="fas fa-clock" aria-hidden="true"></i> ${recipe.time || 'N/A'}`;
+            detailRecipeType.innerHTML = `<i class="fas fa-leaf" aria-hidden="true"></i> ${displayType}`;
+            detailRecipeMeal.innerHTML = `<i class="fas fa-concierge-bell" aria-hidden="true"></i> ${displayMeal}`;
+
+            // Set up the favourite button on the detail page
+            detailFavouriteBtn.setAttribute('data-id', recipe.id);
+            updateFavouriteButtons(recipe.id, isFavourite(recipe.id)); // Update its state
+
+
+            // Render ingredients
+            detailRecipeIngredients.innerHTML = ''; // Clear previous
+            // Check if ingredients is an array before processing
+            if (Array.isArray(recipe.ingredients)) {
+                recipe.ingredients.forEach(ingredient => {
+                    // Handle cases where ingredient might not be a simple string
+                    const ingredientText = typeof ingredient === 'string' ? ingredient : JSON.stringify(ingredient); // Fallback for non-strings
+                    const li = document.createElement('li');
+                    li.textContent = ingredientText;
+                    detailRecipeIngredients.appendChild(li);
+                });
+            } else {
+                detailRecipeIngredients.innerHTML = '<li>Ingredient information not available.</li>';
+            }
+
+
+            // Render instructions
+            detailRecipeInstructions.innerHTML = ''; // Clear previous
+            detailRecipeInstructions.style.counterReset = 'step-counter'; // Reset counter for <ol>
+            // Check if instructions is an array before processing
+            if (Array.isArray(recipe.instructions)) {
+                recipe.instructions.forEach((instruction) => {
+                    const li = document.createElement('li');
+                    li.textContent = instruction; // JS counter handles numbering via CSS
+                    detailRecipeInstructions.appendChild(li);
+                });
+            } else {
+                detailRecipeInstructions.innerHTML = '<li>Instruction steps not available.</li>';
+            }
+
+
+            // Show the detail page and hide others
+            hideAllPages();
+            recipeDetail.style.display = 'block';
+            window.scrollTo(0, 0); // Scroll to top
+            // Focus the heading or back button for accessibility
+            detailRecipeTitle.focus(); // Focus the title h1
+        }
+
+        // --- Feedback Modal Functions ---
+        function showFeedbackModal(event) {
+             event.preventDefault(); // Prevent the default link behavior
+             feedbackModal.style.display = 'block';
+             // Add event listener to close modal when clicking outside the modal content
+             window.addEventListener('click', closeFeedbackModalOutside);
+             // Hide main content from screen readers while modal is open
+             document.querySelector('main, .hero, .registration-page, .main-page, .recipe-detail, footer').setAttribute('aria-hidden', 'true');
+             // Focus the close button or first interactive element for accessibility
+             closeFeedbackModalBtn.focus();
+        }
+
+        function hideFeedbackModal() {
+            feedbackModal.style.display = 'none';
+            // Remove the event listener for clicking outside
+            window.removeEventListener('click', closeFeedbackModalOutside);
+             // Restore visibility for screen readers
+            document.querySelector('main, .hero, .registration-page, .main-page, .recipe-detail, footer').setAttribute('aria-hidden', 'false');
+             // Optionally return focus to the element that opened the modal
+             // (Requires storing the triggering element, more advanced accessibility)
+             // For now, just return focus to body or a logical element
+             document.body.focus();
+        }
+
+        function closeFeedbackModalOutside(event) {
+            // If the click is outside the modal content, close the modal
+            if (event.target === feedbackModal) {
+                hideFeedbackModal();
+            }
+        }
+
+        function handleFeedbackSubmit(event) {
+            event.preventDefault(); // Prevent actual form submission
+
+            const rating = feedbackForm.elements['rating'].value;
+            const comments = document.getElementById('feedbackText').value.trim();
+
+            if (!rating) {
+                 alert('Please select a rating.');
+                 return; // Stop if no rating is selected
+            }
+
+            console.log('Feedback Submitted:', {
+                rating: rating,
+                comments: comments
+            });
+
+            // In a real application, you would send this data to a server.
+            // For this example, we'll just log it and show a confirmation.
+
+            alert('Thank you for your feedback!');
+
+            // Clear the form
+            feedbackForm.reset();
+            // Hide the modal
+            hideFeedbackModal();
+        }
+
+
+        // Set Event Listeners
+        function setupEventListeners() {
+            sidebarToggle.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar); // Close sidebar clicking overlay
+
+            // Navigation Links
+            homeLinkSidebar.addEventListener('click', showHomePage);
+            favouritesLinkSidebar.addEventListener('click', showFavouritesPage); // Favourites link listener
+            aboutLinkSidebar.addEventListener('click', showAboutPage);
+
+            homeLinkFooter.addEventListener('click', showHomePage);
+            favouritesLinkFooter.addEventListener('click', showFavouritesPage); // Favourites link listener
+            aboutLinkFooter.addEventListener('click', showAboutPage);
+
+            // Feedback link listener
+            feedbackLink.addEventListener('click', showFeedbackModal); // Listen for clicks on the feedback link
+
+            // Close Feedback Modal listeners
+            closeFeedbackModalBtn.addEventListener('click', hideFeedbackModal);
+             // Close modal with Escape key
+             document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape' && feedbackModal.style.display === 'block') {
+                     hideFeedbackModal();
+                 }
+             });
+
+            // Feedback Form submission listener
+            feedbackForm.addEventListener('submit', handleFeedbackSubmit);
+
+
+            if (aboutBackHomeBtn) { // Button on About page
+                aboutBackHomeBtn.addEventListener('click', showHomePage);
+            }
+
+            registerNowBtn.addEventListener('click', showRegistrationPage);
+            registrationForm.addEventListener('submit', handleRegistration);
+
+            // Back button on recipe detail page
+            backToRecipesBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default if it were a link
+                // Check if the search box is currently visible on the main page.
+                // If not, it means we were on the Favourites page before the detail view.
+                 if (recipeSearchBox.style.display === 'none') {
+                     showFavouritesPage(); // Go back to Favourites page
+                 } else {
+                     showMainPage(false); // Go back to main search page, DON'T clear filters/ingredients
+                 }
+            });
+
+            // Ingredient adding
+            addIngredientBtn.addEventListener('click', addIngredient);
+            ingredientInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent potential form submission if it were inside one
+                    addIngredient();
+                }
+            });
+
+            // Search button
+            searchRecipesBtn.addEventListener('click', searchRecipes);
+
+             // Favourite button on the detail page
+             detailFavouriteBtn.addEventListener('click', function() {
+                 const recipeId = parseInt(this.getAttribute('data-id'), 10);
+                 toggleFavourite(recipeId);
+             });
+            // Add keyboard support for accessibility on detail page favourite button
+            detailFavouriteBtn.addEventListener('keydown', function(e) {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                     e.preventDefault(); // Prevent page scroll on Space
+                     const recipeId = parseInt(this.getAttribute('data-id'), 10);
+                     toggleFavourite(recipeId);
+                 }
+             });
+
+
+            // Optional: Close sidebar on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    closeSidebarIfNeeded();
+                }
+            });
+        }
+
+        // Initialize the application
+        function init() {
+            // Set current year in footer
+            if (currentYearSpan) {
+                currentYearSpan.textContent = new Date().getFullYear();
+            }
+            // Set initial aria attribute for sidebar toggle
+            sidebarToggle.setAttribute('aria-expanded', 'false');
+
+            // Load favourites from storage on initialization
+            favourites = getFavouritesFromStorage();
+            console.log("Loaded favourites:", favourites);
+
+
+            // Setup all event listeners
+            setupEventListeners();
+
+            // Show the initial page (Home Page)
+            showHomePage();
+        }
+
+        // Run initialization when the DOM is fully loaded and parsed
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
