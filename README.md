@@ -64,8 +64,8 @@ Recipe_recommender/
 
 ## 👩‍💻 Author
 
-**Sreenidhi Thupkari**  
-[GitHub](https://github.com/sreenidhi-06) | [LinkedIn](https://www.linkedin.com/in/sreenidhi-thupkari-5526832a5)
+****  Vadla Hasini
+[GitHub](https://github.com/hasinivadla) | [LinkedIn](www.linkedin.com/in/hasini-vadla-509028300)
 
 ---
 
